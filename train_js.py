@@ -109,7 +109,8 @@ def train_model(model,criterion,optimizer,scheduler,num_epochs=25):
                 best_model = model.state_dict()
 
     cost_time = time.time() - since
-    print ('Training complete in {:.0f}m {:.0f}s'.format(cost_time//60,cost_time%60))
+    print('Training complete in {:.0f}m {:.0f}s'.format(cost_time//60,cost_time%60))
+    f.close()
     print ('Best Train Acc is {:.4f}'.format(best_train_acc))
     print ('Best Val Acc is {:.4f}'.format(best_acc))
     model.load_state_dict(best_model)
@@ -147,11 +148,10 @@ if __name__ == '__main__':
                                             optimizer=optimizer,
                                             criterion=criterion,
                                             scheduler=scheduler,
-                                            num_epochs=args.epoch)
+                                            num_epochs=epoch)
 
     exp_name = 'resnet%d dataset: %s batchsize: %d epoch: %d bestValAcc: %.4f bestTrainAcc: %.4f \n' % (
     args.depth, args.dataset,args.batch_size, args.epoch,best_acc,best_train_acc)
     with open(args.res,'a') as f:
         f.write(exp_name)
-        f.close()
 

@@ -1,5 +1,6 @@
 import torchvision.datasets as datasets
-
+import torchvision.transforms as transforms
+import torch
 
 class DataLoader():
     def __init__(self,dataset,batch_size):
@@ -7,7 +8,7 @@ class DataLoader():
         self.batch_size = batch_size
 
     def load_data(self):
-        data_dir = './data'
+        data_dir = '/home/ouyangzhihao/.keras/datasets'
         data_transforms = {
             'train': transforms.Compose([
                 transforms.RandomCrop(32, padding=4),
@@ -21,22 +22,22 @@ class DataLoader():
             ])
         }
         if self.dataset == 'cifar-10':
-            data_train = datasets.CIFAR10(root="./data/",
+            data_train = datasets.CIFAR10(root=data_dir,
                                           transform=data_transforms['train'],
                                           train=True,
                                           download=True)
 
-            data_test = datasets.CIFAR10(root="./data/",
+            data_test = datasets.CIFAR10(root=data_dir,
                                          transform=data_transforms['val'],
                                          train=False,
                                          download=True)
         if self.dataset == 'cifar-100':
-            data_train = datasets.CIFAR100(root="./data/",
+            data_train = datasets.CIFAR100(root=data_dir,
                                           transform=data_transforms['train'],
                                           train=True,
                                           download=True)
 
-            data_test = datasets.CIFAR100(root="./data/",
+            data_test = datasets.CIFAR100(root=data_dir,
                                          transform=data_transforms['val'],
                                          train=False,
                                          download=True)
