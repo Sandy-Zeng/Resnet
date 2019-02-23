@@ -30,7 +30,7 @@ args = parser.parse_args()
 
 if os.path.exists(args.exp_dir):
     print ('Already exist')
-    exit()
+    # exit()
 summary = TensorboardSummary(args.exp_dir)
 tb_writer = summary.create_summary()
 
@@ -74,7 +74,60 @@ def train_model(model,criterion,optimizer,scheduler,num_epochs=25):
 
                 #forward
                 outputs = model(inputs)
-                loss = criterion(outputs, labels)
+                # loss = criterion(outputs, labels)
+                # print(loss)
+
+                # import ipdb; ipdb.set_trace()
+                def softmax(x):
+                    return x.exp() / (x.exp().sum(-1)).unsqueeze(-1)
+                def nl(input, target):
+                    return -input[range(target.shape[0]), target].log().mean()
+                def nl_js(input, target):
+                    losses = -input[range(target.shape[0]), target].log()
+
+                    # print(losses.shape)
+                    # import ipdb; ipdb.set_trace()
+
+                    group = 8
+                    num_of_items_group = int(losses.shape[0] / group)
+
+                    global_average_f = losses.mean()
+                    group_mean = []
+                    group_var = []
+                    for i in range(group):
+                        group_mean.append(losses[i * num_of_items_group:(i + 1) * num_of_items_group].mean())
+                        group_var.append(losses[i * num_of_items_group:(i + 1) * num_of_items_group].var())
+
+                    gama = 0
+                    for i in range(0,group):
+                        gama += 1 / ( num_of_items_group / torch.pow(group_var[i], 2)  * torch.pow(group_mean[i] - global_average_f, 2 ) )
+                        print(( num_of_items_group / torch.pow(group_var[i], 2)  * torch.pow(group_mean[i] - global_average_f, 2 ) ))
+                    gama = (group - 3 ) * gama
+                    # import ipdb; ipdb.set_trace()
+                    if(gama > group):
+                        gama = group
+                    print('gama',gama)
+
+                    js_loss = 0
+                    for i in range(group):
+                        js_loss += global_average_f + (1 - gama) * (group_mean[i] - global_average_f)
+
+                    print('js_loss',js_loss)
+                    print('*****'*10)
+
+                    return js_loss
+
+                pred = softmax(outputs)
+                # loss = nl(pred, labels)
+                loss = nl_js(pred, labels)
+
+
+                # loss
+                # print(loss2)
+                # print(loss2.shape)
+                # loss =
+
+
                 _, preds = torch.max(outputs.data, 1)
                 # _,top5_preds = torch.topk(outputs.data,k=5,dim=1)
                 # print ('group loss:',group_loss[0])
@@ -109,8 +162,7 @@ def train_model(model,criterion,optimizer,scheduler,num_epochs=25):
                 best_model = model.state_dict()
 
     cost_time = time.time() - since
-    print('Training complete in {:.0f}m {:.0f}s'.format(cost_time//60,cost_time%60))
-    f.close()
+    print ('Training complete in {:.0f}m {:.0f}s'.format(cost_time//60,cost_time%60))
     print ('Best Train Acc is {:.4f}'.format(best_train_acc))
     print ('Best Val Acc is {:.4f}'.format(best_acc))
     model.load_state_dict(best_model)
@@ -148,10 +200,11 @@ if __name__ == '__main__':
                                             optimizer=optimizer,
                                             criterion=criterion,
                                             scheduler=scheduler,
-                                            num_epochs=epoch)
+                                            num_epochs=args.epoch)
 
     exp_name = 'resnet%d dataset: %s batchsize: %d epoch: %d bestValAcc: %.4f bestTrainAcc: %.4f \n' % (
     args.depth, args.dataset,args.batch_size, args.epoch,best_acc,best_train_acc)
     with open(args.res,'a') as f:
         f.write(exp_name)
+        f.close()
 
